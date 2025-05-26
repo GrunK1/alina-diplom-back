@@ -1,6 +1,6 @@
 package com.example.alinadiplom.controllers;
 
-import com.example.alinadiplom.DTO.RouteListDto;
+import com.example.alinadiplom.DTO.RouteListDTO;
 import com.example.alinadiplom.model.PollRegistry;
 import com.example.alinadiplom.model.PollRegistryToRouteList;
 import com.example.alinadiplom.model.RouteList;
@@ -56,41 +56,42 @@ public class RouteListController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
-    @GetMapping("/enriched")
-    public List<RouteListDto> getEnrichedRouteLists() {
-        List<RouteList> routeLists = repository.findAll();
-
-        return routeLists.stream()
-                .map(routeList -> {
-                    Optional<PollRegistryToRouteList> link = prToRlRepository
-                            .findTopByRouteListNumberOrderByDateOfSendRouteListDesc(routeList);
-
-                    if (link.isEmpty()) return null;
-
-                    PollRegistry poll = link.get().getPrId();
-
-                    long days = Duration.between(
-                            poll.getPollDate().toInstant(),
-                            Instant.now()
-                    ).toDays();
-
-                    String priority;
-                    if (days <= 6) priority = "Низкий";
-                    else if (days <= 14) priority = "Средний";
-                    else if (days <= 28) priority = "Средний+";
-                    else if (days <= 45) priority = "Высокий";
-                    else priority = "Критический";
-
-                    return new RouteListDto(
-                            routeList.getMlNumber(),
-                            routeList.getPlannedStartDate(),
-                            routeList.getPlannedEndDate(),
-                            poll.getPollDate(),
-                            poll.getPuSerialNumber().getPuSerialNumber(),
-                            priority
-                    );
-                })
-                .filter(Objects::nonNull)
-                .toList();
-    }
+//    @GetMapping("/enriched")
+//    public List<RouteListDto> getEnrichedRouteLists() {
+//        List<RouteList> routeLists = repository.findAll();
+//
+//        return routeLists.stream()
+//                .map(routeList ->
+//                {
+//                    Optional<PollRegistryToRouteList> link = prToRlRepository
+//                            .findTopByRouteListNumberOrderByDateOfSendRouteListDesc(routeList);
+//
+//                    if (link.isEmpty()) return null;
+//
+//                    PollRegistry poll = link.get().getPrId();
+//
+//                    long days = Duration.between(
+//                            poll.getPollDate().toInstant(),
+//                            Instant.now()
+//                    ).toDays();
+//
+//                    String priority;
+//                    if (days <= 6) priority = "Низкий";
+//                    else if (days <= 14) priority = "Средний";
+//                    else if (days <= 28) priority = "Средний+";
+//                    else if (days <= 45) priority = "Высокий";
+//                    else priority = "Критический";
+//
+//                    return new RouteListDto(
+//                            routeList.getMlNumber(),
+//                            routeList.getPlannedStartDate(),
+//                            routeList.getPlannedEndDate(),
+//                            poll.getPollDate(),
+//                            poll.getPuSerialNumber().getPuSerialNumber(),
+//                            priority
+//                    );
+//                })
+//                .filter(Objects::nonNull)
+//                .toList();
+//    }
 }

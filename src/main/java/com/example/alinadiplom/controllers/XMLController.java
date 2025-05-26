@@ -1,39 +1,50 @@
 package com.example.alinadiplom.controllers;
 
-import com.example.alinadiplom.DTO.RouteListDTO;
+import com.example.alinadiplom.DTO.XMLRouteListDTO;
+import com.example.alinadiplom.model.PollRegistry;
+import com.example.alinadiplom.model.PollRegistryToRouteList;
 import com.example.alinadiplom.model.RouteList;
+import com.example.alinadiplom.services.PollRegistryService;
+import com.example.alinadiplom.services.PollRegistryToRouteListService;
+import com.example.alinadiplom.services.RecordDeviceService;
+import com.example.alinadiplom.services.RouteListService;
+import jakarta.transaction.Transactional;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.ws.Response;
-import org.apache.catalina.connector.Request;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/xml")
 public class XMLController {
+    @Autowired
+    private RouteListService routeListService;
+    @Autowired
+    private RecordDeviceService recordDeviceService;
+    @Autowired
+    private PollRegistryService pollRegistryService;
+    @Autowired
+    private PollRegistryToRouteListService pollRegistryToRouteListService;
+
     @PostMapping(
             value = "/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE // Явное указание типа контента
     )
+    @Transactional
     public ResponseEntity<String> uploadFile(
             @RequestPart("file") MultipartFile file) throws IOException, JAXBException
     {
+        Date dateOfSend = new Date();
+
         System.out.println(file);
         System.out.println("size: "+file.getSize());
         System.out.println("content_type: "+file.getContentType());
@@ -46,13 +57,36 @@ public class XMLController {
         }
 //        System.out.println("bytes: "+ Arrays.toString(file.getBytes()));
         // Правильное чтение XML
-        JAXBContext context = JAXBContext.newInstance(RouteListDTO.class);
+        JAXBContext context = JAXBContext.newInstance(XMLRouteListDTO.class);
         Unmarshaller unmarshaller = context.createUnmarshaller();
-        RouteListDTO routeList = (RouteListDTO) unmarshaller.unmarshal(file.getInputStream());
+        XMLRouteListDTO routeList = (XMLRouteListDTO) unmarshaller.unmarshal(file.getInputStream());
         System.out.println("route list DTO: "+routeList);
 
-        // логика из enriched
+        // добавление кучи говна из XML
+        RouteList rl = new RouteList();
+        rl.setMlNumber(routeList.getMlNumber());
+        rl.setPlannedStartDate(routeList.getPlannedStartDate());
+        rl.setPlannedEndDate(routeList.getPlannedEndDate());
+        rl.setResponsibleOrganization(routeList.getResponsibleOrganization());
+        rl = routeListService.create(rl);
 
-        return ResponseEntity.ok("Файл получен. Размер: " + file.getSize());
+        for (XMLRouteListDTO.PUDTO pu:
+                routeList.getPUs()){
+            PollRegistry pr = new PollRegistry();
+            pr.setIndications(pu.getIndications());
+            pr.setPuSerialNumber(recordDeviceService.getBySerial(pu.getPuSerialNumber()));
+            pr.setPollDate(routeList.getPollDate());
+            pr.setPollFact(pu.getPollFact());
+            pr = pollRegistryService.create(pr);
+
+//            Integer createdPrId = pr.getPrId();
+            PollRegistryToRouteList prToRl = new PollRegistryToRouteList();
+            prToRl.setPrId(pr);
+            prToRl.setDateOfSendRouteList(dateOfSend);
+            prToRl.setRouteListNumber(rl);
+            prToRl = pollRegistryToRouteListService.create(prToRl);
+        }
+
+        return ResponseEntity.ok("Файл получен. Данные записаны. Размер: " + file.getSize());
     }
 }

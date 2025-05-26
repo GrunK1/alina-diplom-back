@@ -36,6 +36,8 @@ public class PollRegistryToRouteListService {
         return repository.save(pollRegistryToRouteList);
     }
 
+
+
     public void delete(Long id) {
         repository.deleteById(id);
     }

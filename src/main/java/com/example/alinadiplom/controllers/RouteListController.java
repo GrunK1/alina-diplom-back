@@ -1,6 +1,8 @@
 package com.example.alinadiplom.controllers;
 
+import com.example.alinadiplom.DTO.PUPoll;
 import com.example.alinadiplom.DTO.RouteListDTO;
+import com.example.alinadiplom.DTO.XMLRouteListDTO;
 import com.example.alinadiplom.model.PollRegistry;
 import com.example.alinadiplom.model.PollRegistryToRouteList;
 import com.example.alinadiplom.model.RouteList;
@@ -16,9 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/route-lists")
@@ -56,10 +56,41 @@ public class RouteListController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
-//    @GetMapping("/enriched")
-//    public List<RouteListDto> getEnrichedRouteLists() {
-//        List<RouteList> routeLists = repository.findAll();
-//
+    @GetMapping("/enriched")
+    public List<RouteListDTO> getEnrichedRouteLists() {
+        List<RouteList> routeLists = repository.findAll();
+        List<RouteListDTO> returnList = new ArrayList<>();
+        for (RouteList rl:
+            routeLists){
+            Integer mlNumber = rl.getMlNumber();
+            Date plannedStartDate = rl.getPlannedStartDate();
+            Date plannedEndDate = rl.getPlannedEndDate();
+            String responsibleOrganization = rl.getResponsibleOrganization();
+            List<PollRegistryToRouteList> prToRlList = prToRlRepository.findAll().stream().filter(x->x.getRouteListNumber()==rl).toList();
+            List<PUPoll> puPollList = new ArrayList<>();
+            Date pollDate = new Date();
+            for (PollRegistryToRouteList prToRl:
+                prToRlList){
+                long days = Duration.between(
+                        prToRl.getPrId().getPollDate().toInstant(),
+                        Instant.now()
+                ).toDays();
+
+                String priority;
+                if (days <= 6) priority = "Низкий";
+                else if (days <= 14) priority = "Средний";
+                else if (days <= 28) priority = "Средний+";
+                else if (days <= 45) priority = "Высокий";
+                else priority = "Критический";
+                pollDate = prToRl.getPrId().getPollDate();
+                puPollList.add(new PUPoll(prToRl.getPrId().getPuSerialNumber().getPuSerialNumber(),
+                        priority));
+            }
+            RouteListDTO dto = new RouteListDTO(mlNumber, plannedStartDate, plannedEndDate, pollDate, puPollList);
+            returnList.add(dto);
+        }
+        return returnList;
+
 //        return routeLists.stream()
 //                .map(routeList ->
 //                {
@@ -93,5 +124,5 @@ public class RouteListController {
 //                })
 //                .filter(Objects::nonNull)
 //                .toList();
-//    }
+    }
 }

@@ -20,7 +20,6 @@ public class Task {
     RouteList mlNumber;
     @ManyToOne
     PermissionDocument pdId;
-    @ManyToOne
     Priority priorityId;
     @ManyToOne
     WorkType wtId;

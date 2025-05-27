@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/priorities")
+@Deprecated(forRemoval = true, since = "Теперь Enum.")
 public class PriorityController {
 
     @Autowired

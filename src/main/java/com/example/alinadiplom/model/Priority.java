@@ -6,12 +6,28 @@ import jakarta.persistence.Id;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
-@Data
-@Entity
-@RequiredArgsConstructor
-public class Priority {
-    @Id
-    @GeneratedValue
-    Integer priorityId;
-    String priorityType;
+public enum Priority {
+    CRITICAL ("Критический"),
+    HIGH ("Высокий"),
+    MEDIUM_PLUS ("Средний+"),
+    MEDIUM ("Средний"),
+    LOW ("Низкий");
+
+    String title;
+    Priority(String title){
+        this.title = title;
+    }
+    void setTitle(String title){
+        this.title=title;
+    }
+    public String getTitle(){
+        return this.title;
+    }
+    public static Priority getPriority(int days){
+        if (days <= 6) return Priority.LOW;
+        else if (days <= 14) return Priority.MEDIUM;
+        else if (days <= 28) return Priority.MEDIUM_PLUS;
+        else if (days <= 45) return Priority.HIGH;
+        else return Priority.CRITICAL;
+    }
 }

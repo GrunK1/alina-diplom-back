@@ -5,6 +5,7 @@ import com.example.alinadiplom.DTO.RouteListDTO;
 import com.example.alinadiplom.DTO.XMLRouteListDTO;
 import com.example.alinadiplom.model.PollRegistry;
 import com.example.alinadiplom.model.PollRegistryToRouteList;
+import com.example.alinadiplom.model.Priority;
 import com.example.alinadiplom.model.RouteList;
 import com.example.alinadiplom.repositories.PollRegistryRepository;
 import com.example.alinadiplom.repositories.PollRegistryToRouteListRepository;
@@ -56,6 +57,7 @@ public class RouteListController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
     @GetMapping("/enriched")
     public List<RouteListDTO> getEnrichedRouteLists() {
         List<RouteList> routeLists = repository.findAll();
@@ -76,12 +78,8 @@ public class RouteListController {
                         Instant.now()
                 ).toDays();
 
-                String priority;
-                if (days <= 6) priority = "Низкий";
-                else if (days <= 14) priority = "Средний";
-                else if (days <= 28) priority = "Средний+";
-                else if (days <= 45) priority = "Высокий";
-                else priority = "Критический";
+                String priority = Priority.getPriority((int) days).getTitle();
+
                 pollDate = prToRl.getPrId().getPollDate();
                 puPollList.add(new PUPoll(prToRl.getPrId().getPuSerialNumber().getPuSerialNumber(),
                         priority));

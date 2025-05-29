@@ -13,14 +13,23 @@ public class Task {
     @Id
     @GeneratedValue
     Long taskNumber;
+
     String address;
     String comment;
     Date dateOfCreation;
+
     @ManyToOne
     RouteList mlNumber;
+
     @ManyToOne
     PermissionDocument pdId;
-    Priority priorityId;
+
+    @Enumerated(EnumType.ORDINAL)
+    private Priority priorityId;
+
     @ManyToOne
     WorkType wtId;
+
+    @ManyToOne
+    private Employee assignee;
 }

@@ -24,7 +24,7 @@ public class WorkTypeService {
     }
 
     public WorkType getById(Integer id) {
-        return repository.findById(id)
+        return repository.findByWtId(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WorkType not found: " + id));
     }
 

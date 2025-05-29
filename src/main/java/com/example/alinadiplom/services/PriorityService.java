@@ -2,7 +2,6 @@ package com.example.alinadiplom.services;
 
 import com.example.alinadiplom.exceptions.ResourceNotFoundException;
 import com.example.alinadiplom.model.Priority;
-import com.example.alinadiplom.repositories.PriorityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

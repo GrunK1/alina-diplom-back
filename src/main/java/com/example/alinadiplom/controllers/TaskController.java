@@ -1,5 +1,6 @@
 package com.example.alinadiplom.controllers;
 
+import com.example.alinadiplom.DTO.CreateTaskDTO;
 import com.example.alinadiplom.model.Task;
 import com.example.alinadiplom.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -17,7 +19,7 @@ public class TaskController {
     private TaskService service;
 
     @PostMapping
-    public ResponseEntity<Task> create(@RequestBody Task task) {
+    public ResponseEntity<Task> create(@RequestBody CreateTaskDTO task) {
         return new ResponseEntity<>(service.create(task), HttpStatus.CREATED);
     }
 

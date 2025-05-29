@@ -26,6 +26,9 @@ public class RouteListService {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("RouteList not found: " + id));
     }
+    public RouteList getByMlNumber(Integer mlNumber){
+        return repository.findByMlNumber(mlNumber).orElseThrow(() -> new ResourceNotFoundException("Route list not found: "+mlNumber));
+    }
 
     public RouteList update(Integer id, RouteList newData) {
         RouteList routeList = getById(id);

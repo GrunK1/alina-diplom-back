@@ -26,6 +26,9 @@ public class PermissionDocumentService {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PermissionDocument not found: " + id));
     }
+    public PermissionDocument getByPrId(Integer prId){
+        return repository.findByPdId(prId).orElseThrow(() -> new ResourceNotFoundException("PermissionDocument not found: " + prId));
+    }
 
     public PermissionDocument update(Integer id, PermissionDocument newData) {
         PermissionDocument document = getById(id);

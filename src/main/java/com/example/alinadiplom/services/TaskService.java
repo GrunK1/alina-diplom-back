@@ -1,9 +1,8 @@
 package com.example.alinadiplom.services;
 
+import com.example.alinadiplom.DTO.CreateTaskDTO;
 import com.example.alinadiplom.exceptions.ResourceNotFoundException;
-import com.example.alinadiplom.model.Status;
-import com.example.alinadiplom.model.Task;
-import com.example.alinadiplom.model.TaskStatus;
+import com.example.alinadiplom.model.*;
 import com.example.alinadiplom.repositories.TaskRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,38 +18,64 @@ public class TaskService {
 
     @Autowired
     private TaskRepository repository;
+
+    @Autowired
+    private RouteListService routeListService;
+
+    @Autowired
+    private PermissionDocumentService permissionDocumentService;
+
+    @Autowired
     private StatusService statusService;
+
+    @Autowired
     private TaskStatusService taskStatusService;
 
-    @Transactional
-    public Task create(Task task) {
-        task.setTaskNumber(null);
-        task = repository.save(task);
+    @Autowired
+    private WorkTypeService workTypeService;
 
-        /// добавление записи в смежную со статусами таблицу
-        // получение статуса "запланировано". если его нет - добавляем
+    @Autowired
+    private EmployeeService employeeService;
+
+    @Transactional
+    public Task create(CreateTaskDTO task) {
+        Task t = new Task();
+        t.setComment(task.getComment());
+        t.setDateOfCreation(new Date());
+        t.setAddress(task.getAddress());
+        t.setMlNumber(routeListService.getByMlNumber(Math.toIntExact(task.getMlNumber())));
+        t.setPdId(permissionDocumentService.getByPrId(Math.toIntExact(task.getPdId())));
+        t.setPriorityId(Priority.valueOf(task.getPriorityId())); // ✅ Исправлено
+        t.setWtId(workTypeService.getById(task.getWtId()));
+        t.setAssignee(employeeService.getById(task.getAssigneeId()));
+        t.setTaskNumber(null);
+        t = repository.save(t);
+
+        // Добавление статуса "Запланировано"
         Status taskStatus;
         try {
             taskStatus = statusService.getAll()
-                    .stream().filter(x-> Objects.equals(x.getStatusType(), "Запланировано"))
-                    .findFirst().orElseThrow();
-        } catch (Exception e){
+                    .stream()
+                    .filter(x -> Objects.equals(x.getStatusType(), "Запланировано"))
+                    .findFirst()
+                    .orElseThrow();
+        } catch (Exception e) {
             System.out.println("Status \"Запланировано\" not found. Force adding it to DB.");
             Status planned = new Status();
             planned.setStatusType("Запланировано");
             taskStatus = statusService.create(planned);
         }
-        // добавление записи в смежную таблицу
+
+        // Добавление записи в смежную таблицу TaskStatus
         TaskStatus taskStatusEntry = new TaskStatus();
         Date date = new Date();
         taskStatusEntry.setDateOfStatusSet(date);
         taskStatusEntry.setTimeOfStatusSet(new Time(date.getTime()));
-        taskStatusEntry.setTaskNumber(task);
+        taskStatusEntry.setTaskNumber(t);
         taskStatusEntry.setStatusId(taskStatus);
         taskStatusService.create(taskStatusEntry);
 
-        // возвращаем таску раз добавили
-        return task;
+        return t;
     }
 
     public List<Task> getAll() {

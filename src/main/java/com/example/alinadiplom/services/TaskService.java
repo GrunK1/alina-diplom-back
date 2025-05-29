@@ -1,6 +1,7 @@
 package com.example.alinadiplom.services;
 
 import com.example.alinadiplom.DTO.CreateTaskDTO;
+import com.example.alinadiplom.DTO.XMLTaskSendDTO;
 import com.example.alinadiplom.exceptions.ResourceNotFoundException;
 import com.example.alinadiplom.model.*;
 import com.example.alinadiplom.repositories.TaskRepository;
@@ -38,16 +39,23 @@ public class TaskService {
     private EmployeeService employeeService;
 
     @Transactional
-    public Task create(CreateTaskDTO task) {
+    public XMLTaskSendDTO create(CreateTaskDTO task) {
         Task t = new Task();
+        RouteList rl = routeListService.getByMlNumber(Math.toIntExact(task.getMlNumber()));
+        PermissionDocument pd = permissionDocumentService.getByPrId(Math.toIntExact(task.getPdId()));
+        Priority prior = Priority.valueOf(task.getPriorityId());
+        WorkType wt = workTypeService.getById(task.getWtId());
+        Employee employee = employeeService.getById(task.getAssigneeId());
+
+
         t.setComment(task.getComment());
         t.setDateOfCreation(new Date());
         t.setAddress(task.getAddress());
-        t.setMlNumber(routeListService.getByMlNumber(Math.toIntExact(task.getMlNumber())));
-        t.setPdId(permissionDocumentService.getByPrId(Math.toIntExact(task.getPdId())));
-        t.setPriorityId(Priority.valueOf(task.getPriorityId())); // ✅ Исправлено
-        t.setWtId(workTypeService.getById(task.getWtId()));
-        t.setAssignee(employeeService.getById(task.getAssigneeId()));
+        t.setMlNumber(rl);
+        t.setPdId(pd);
+        t.setPriorityId(prior); // ✅ Исправлено
+        t.setWtId(wt);
+        t.setAssignee(employee);
         t.setTaskNumber(null);
         t = repository.save(t);
 
@@ -75,7 +83,10 @@ public class TaskService {
         taskStatusEntry.setStatusId(taskStatus);
         taskStatusService.create(taskStatusEntry);
 
-        return t;
+
+        XMLTaskSendDTO xmlTask = new XMLTaskSendDTO(t, rl, prior, pd, wt, employee);
+
+        return xmlTask;
     }
 
     public List<Task> getAll() {
